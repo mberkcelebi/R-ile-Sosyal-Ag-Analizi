@@ -1,0 +1,194 @@
+---
+title: "SOCIAL NETWORK ANALYSIS in R"
+author: "Mustafa Berk ÇELEBİ"
+date: "08 01 2021"
+output:
+  html_document:
+    highlight: kate
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+```
+
+# Sosyal Ağ Analizi Nedir?
+Sosyal Ağ Analizi, ağları görselleştirmek, genel ağ yapısının belirli özelliklerini tanımlamak ve ağ yapılarının ve dinamiklerinin matematiksel ve istatistiksel modellerini oluşturmak için kullanılan bir yöntemdir. Sosyal ağlar, bir veya daha fazla ilişki türü tarafından bağlanan bir dizi düğüm olarak tanımlanır. Düğümler genellikle kişiler veya kuruluşlardır, ancak bu düğümler, prensipte diğer birimlere bağlanabilen herhangi bir birim düğüm olarak incelenebilir. Örneğin sosyal ağ analizi web sitelerini, makaleleri, şehirleri, spor müsabakalarındaki bazı verileri incelemek için kullanılabilmektedir
+
+
+R ile sosyal ağ analizinde grafik algoritmalarının sorunsuz, anlaşılır bir şekilde uygulanması, milyonlarca köşe-kenar ile büyük grafiklerin sorunsuz ve hızlı işlenmesi için "igpraph" paketi ve bu paketin içindeki graph fonksiyonu kullanılır.
+
+
+# Giriş Örnekler
+
+
+```{r message=FALSE, warning=FALSE}
+library(igraph)
+
+```
+
+Bir ağdaki bağlar yönlü veya yönsüz olabilir. Başlangıç olarak yönsüz ağlarla ilgili örnekler verelim. directed=F komutu, ağların yönsüz olmasını sağlar.
+
+``` {r message=FALSE, warning=FALSE}
+a<-make_empty_graph(directed=F)
+a<-a+vertices("A","B","C","D","E")
+plot(a)
+```
+
+
+``` {r message=FALSE, warning=FALSE}
+a<-a+edges("A","B","B","C","C","D","D","E")
+plot(a)
+```
+
+Belirtilen iki düğümün arasında komşuluk olup olmadığı ise aşağıdaki kod ile incelenebilir.
+
+
+``` {r message=FALSE, warning=FALSE}
+are_adjacent(a,"A","D") 
+are_adjacent(a,"A","B")
+```
+
+Elimizdeki düğümlerin isimlerini aşağıdaki kodu kullanarak görebiliriz
+
+``` {r message=FALSE, warning=FALSE}
+V(a)
+```
+
+
+Verilen örneklerde şu ana kadar yönsüz ağlar üzerinde durduk. Yönsüz bir ağı, aşağıdaki şekilde yönlü olarak değiştirmemiz mümkündür. Örneğimizde, yönsüz bir ağı tek yönlü bir ağ olarak değiştirelim.
+
+``` {r message=FALSE, warning=FALSE}
+
+b<-as.directed(a,mode = "arbitrary")
+plot(b)
+```
+
+Şimdi de yönlü bir ağ örneği olarak, A'dan B'ye giden bir ağ oluşturup ve bunun grafiğini çizdirelim.
+
+
+``` {r message=FALSE, warning=FALSE}
+b<-graph(c("A","B"))
+plot(b)
+```
+
+
+Grafiklerimizi çizdirirken aynı zamanda düğüm renklerini, boyutlarını değiştirmek gibi birtakım işlemler yapılabilir. İkinci örneğimizde bunu ele alalım.
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+c<-graph(c("A","B","B","C","C","D"))
+plot(c, vertex.color="yellow", vertex.size=10, edge.color="red", edge.arrow.size=1.5)
+```
+
+Yazdığımız kodun sonucunda, A'dan B'ye, B'den C'ye ve C'den D'ye doğru giden bir ağ ve grafiğini elde ettik. "vertex.color" komutu ile, düğüm renklerini sarı yaptık. "vertex.size" komutu ile, düğümün boyutunu değiştirdik ve 10 yaptık. "edge.color" komutu ile, kenarların boyunu kırmızı olarak değiştirdik. Son olarak "edge.arrow.size" komutu ile de kenarların boyutunun değişmesini sağladık.
+
+Şimdiki örnekte 10 düğümden oluşan bir yıldız ağı oluşturalım.
+
+
+``` {r message=FALSE, warning=FALSE}
+yildiz<-graph.star(10,mode="in")
+plot(yildiz)
+```
+
+
+# NBA Oyuncuları Sosyal Ağ Analizi
+
+
+Öğrendiğimiz bazı komutları bir örnek üzerinde inceleyelim. Sosyal ağ analizi örneği olarak, bir grup NBA oyuncularının verilerini ele alalım. Elimizdeki bilgilerde oyuncuların isimleri, oynadıkları takımlar ve normal sezon MVP ödülünü alıp almadıkları vardır.
+
+
+``` {r message=FALSE, warning=FALSE}
+
+library(readxl)
+oyuncular_takim <- read_excel("C:/Users/berkc/OneDrive/Masaüstü/oyuncular_takim.xlsx")
+oyuncular_mvp <- read_excel("C:/Users/berkc/OneDrive/Masaüstü/oyuncular_mvp.xlsx")
+
+oyuncular_takim
+
+oyuncular_mvp
+```
+
+
+
+"oyuncular_takim" adını verdiğimiz data frame'de, Player1 ile Player2 sütunundaki oyuncuların, birlikte hangi takımlarda oynadıkları verilmiştir. "oyuncular_mvp" data frame'inde ise, belirtilen oyuncuların normal sezon MVP'si olup olmadıkları bilgisi verilmiştir.
+
+
+
+``` {r message=FALSE, warning=FALSE}
+socialnetwork <- graph_from_data_frame(d=oyuncular_takim, vertices=oyuncular_mvp, directed=F)
+```
+
+
+
+"degree" fonksiyonu ile, ağımızdaki her bir düğümün kaç adet bağı olduğu konusunda bilgi ediniriz. V() fonksiyonu ile, ağımızdaki düğüm sayısını ve E() fonksiyonu ile de düğümler arası bağları aşağıdaki gibi görebiliriz.
+
+
+``` {r message=FALSE, warning=FALSE}
+
+degree(socialnetwork)
+V(socialnetwork)
+E(socialnetwork)
+
+```
+
+
+
+graph_from_data_frame() fonksiyonundaki d değişkeni, oluşturduğumuz "oyuncular_takim" dataframe'indeki oyuncuların düğümlerini birbirine bağlayan kenarları alırken, vertices değişkeni ise, "oyuncular_mvp" dataframe'indeki oyuncuların düğümlerini alır. Ağların yönlü ve yönsüz olabileceğini söylemiştik. Bu ağımızda, birlikte farklı takımlarda oynayan oyuncuların olduğunu göz önüne alarak, ağımız yönsüz olacaktır. Şimdi plot fonksiyonu ile ağımızı çizdirelim.
+
+
+
+``` {r message=FALSE, warning=FALSE}
+plot(socialnetwork)
+```
+
+
+plot fonksiyonu ile çizdirdiğimiz grafikte, diğer ek bilgilere yer verilmeksizin elimizdeki ağa ait daha basit bir grafikle karşılaşıyoruz. Ek bilgileri de ekleyerek ağımızı çeşitli şekillerde görselleştirebiliriz. Örneğin oyuncular arasındaki bağları, birlikte oynadıkları takımlara göre renklendirelim. Birlikte Lakers takımında oynayan oyuncular arasındaki bağı mor, Cleveland takımında oynayan oyuncuları kırmızı, diğer takımda, yani Suns takımında birlikte oynayan oyuncular arasındaki bağ ise turuncu olsun. Ayrıca bir oyuncu MVP ödülün aldıysa düğümü altın renginde, almadıysa ise siyah renkte olsun.
+
+
+
+``` {r message=FALSE, warning=FALSE}
+
+E(socialnetwork)$color <- ifelse(E(socialnetwork)$Teams == "Lakers", "purple",
+                    ifelse(E(socialnetwork)$Teams == "Cleveland","red","orange"))
+plot(socialnetwork)
+
+
+V(socialnetwork)$color <- ifelse(V(socialnetwork)$SeasonMVP == "Yes", "gold","black")
+                    
+plot(socialnetwork)
+
+```
+
+
+
+Belli görselleştirmeleri yaptık. Son olarak da bu görselleri daha anlaşılır bir hale getirelim. Burada "legend" fonksiyonundan yararlanacağız.
+
+
+``` {r message=FALSE, warning=FALSE}
+plot(socialnetwork, vertex.frame.color="white")
+
+legend("topleft", c("Yes","No"), pch=16,
+       col= c("gold","black"),pt.cex = 1,cex =.6)
+
+
+legend("bottomright", c("Lakers","Cleveland", "Suns"), 
+       col=c("purple","red","orange"),lty=1, cex=.6)
+```
+
+
+Görselde gördüğümüz üzere, düğümü siyah renkte olan oyuncuların MVP ödülü kazanamadığını, altın renkte olan oyuncuların ise MVP ödülünü kazandığını görüyoruz. Aralarındaki bağın renginin kırmızı olan oyuncuların, birlikte Cleveland takımında oynadıklarını, mor renkte olan oyuncuların Lakers'ta oynadığını ve aralarındaki bağ renginin turuncu olan oyuncuların ise birlikte Suns takımında oynadıklarını görüyoruz. Örneğin Lebron James'in, Shaquille O'neal ve Shawn Marion ile birlikte Cleveland takımında oynadığını, JR Smith'le ise hem Cleveland, hem Lakers'ta birlikte oynadığını görüyoruz.
+
+
+
+# Kaynakça
+
+
+http://pablobarbera.com/big-data-upf/html/02a-networks-intro-visualization.html
+http://evelinag.com/blog/2015/12-15-star-wars-social-network/
+https://www.geeksforgeeks.org/social-network-analysis-using-r-programming/
+https://rpubs.com/wctucker/302110
+https://www.webpages.uidaho.edu/~stevel/517/RDM-slides-network-analysis-with-r.pdf
+espn.com/nba/stats
